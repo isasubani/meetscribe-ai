@@ -32,6 +32,22 @@
     return "Unknown Platform";
   }
 
+  function isActualMeetingRoom() {
+    const host = window.location.host;
+    const path = window.location.pathname.replace(/^\/+|\/+$/g, "").split("?")[0];
+    if (host.includes("meet.google.com")) {
+      if (!path || path === "home" || path === "landing" || path.startsWith("about")) return false;
+      return true;
+    }
+    if (host.includes("teams")) {
+      return window.location.href.includes("meetup-join") || path.includes("call");
+    }
+    if (host.includes("zoom.us")) {
+      return path.includes("j/") || path.includes("wc/");
+    }
+    return false;
+  }
+
   function getMeetingKey() {
     const host = window.location.host;
     if (host.includes("meet.google.com")) {
@@ -352,7 +368,12 @@
 
   // Save or replace/update current meeting record in History
   function saveCurrentSessionToHistory(isManual = false) {
+    if (!isActualMeetingRoom()) return Promise.resolve(null);
+    if (transcripts.length === 0 && !isManual) return Promise.resolve(null);
+
     const key = getMeetingKey();
+    if (key.includes("home") || key.includes("landing")) return Promise.resolve(null);
+
     const title = currentMeetingTitle || detectMeetingTitle();
     const now = Date.now();
     const dt = getFormattedDateTime(now);
@@ -1074,6 +1095,16 @@
 
           <!-- PANEL 3: Ask AI -->
           <div id="panel-ai">
+            <div style="display: flex; flex-direction: column; gap: 4px; background: rgba(30, 41, 59, 0.5); padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08);">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="setting-label" style="font-size: 9.5px;">Konteks Transkrip:</span>
+                <span id="ai-ctx-info" style="font-size: 9.5px; color: #38bdf8;">Realtime</span>
+              </div>
+              <select id="ai-context-select" class="setting-input" style="padding: 4px 6px; font-size: 11px; cursor: pointer;">
+                <option value="current">🔴 Meeting Saat Ini (Realtime)</option>
+              </select>
+            </div>
+
             <div class="ai-quick-chips">
               <button class="ai-chip" data-prompt="Ringkas poin penting percakapan ini secara singkat.">✨ Ringkasan</button>
               <button class="ai-chip" data-prompt="Tuliskan Action Items dan siapa penanggung jawabnya.">✅ Action Items</button>
@@ -1091,6 +1122,16 @@
           <!-- PANEL 4: Settings -->
           <div id="panel-settings">
             <div class="setting-field">
+              <label class="setting-label">Preset Provider AI</label>
+              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                <button type="button" class="btn-tool-action" id="preset-9router" style="flex: 1; min-width: 70px;">⚡ 9router</button>
+                <button type="button" class="btn-tool-action" id="preset-openai" style="flex: 1; min-width: 65px;">OpenAI</button>
+                <button type="button" class="btn-tool-action" id="preset-groq" style="flex: 1; min-width: 55px;">Groq</button>
+                <button type="button" class="btn-tool-action" id="preset-ollama" style="flex: 1; min-width: 60px;">Ollama</button>
+              </div>
+              <span id="preset-help-text" style="font-size: 9.5px; color: #38bdf8; min-height: 12px; margin-top: 2px;"></span>
+            </div>
+            <div class="setting-field">
               <label class="setting-label">Bahasa Captions (Google Meet)</label>
               <div style="display: flex; gap: 4px;">
                 <button class="btn-tool-action" id="btn-lang-id" style="flex: 1;">🇮🇩 Indonesia</button>
@@ -1100,15 +1141,18 @@
             </div>
             <div class="setting-field">
               <label class="setting-label">API Base URL</label>
-              <input type="text" class="setting-input" id="cfg-base" placeholder="https://api.openai.com/v1">
+              <input type="text" class="setting-input" id="cfg-base" placeholder="http://localhost:2080/v1 atau https://api.openai.com/v1">
             </div>
             <div class="setting-field">
-              <label class="setting-label">API Key</label>
-              <input type="password" class="setting-input" id="cfg-key" placeholder="sk-...">
+              <div style="display: flex; justify-content: space-between;">
+                <label class="setting-label">API Key</label>
+                <span style="font-size: 9px; color: #94a3b8;">(Opsional untuk 9router / Ollama)</span>
+              </div>
+              <input type="password" class="setting-input" id="cfg-key" placeholder="sk-... / kosongkan jika router lokal">
             </div>
             <div class="setting-field">
               <label class="setting-label">Model</label>
-              <input type="text" class="setting-input" id="cfg-mod" placeholder="gpt-4o-mini">
+              <input type="text" class="setting-input" id="cfg-mod" placeholder="ag/gemini-3.8-flash / gpt-4o-mini">
             </div>
             <button class="btn-save-setting" id="btn-save-cfg-widget">Simpan Konfigurasi</button>
           </div>
@@ -1157,6 +1201,7 @@
 
         if (targetId === "panel-stats") renderFloatingStats();
         if (targetId === "panel-history") renderFloatingHistory();
+        if (targetId === "panel-ai") populateAiContextOptions();
         if (targetId === "panel-settings") loadFloatingSettings();
       });
     });
@@ -1280,6 +1325,16 @@
     const aiBtnSend = shadowRoot.getElementById("btn-widget-ai-send");
     const aiStream = shadowRoot.getElementById("widget-ai-stream");
     const aiChips = shadowRoot.querySelectorAll(".ai-chip");
+    const aiCtxSelect = shadowRoot.getElementById("ai-context-select");
+    const aiCtxInfo = shadowRoot.getElementById("ai-ctx-info");
+
+    if (aiCtxSelect) {
+      aiCtxSelect.addEventListener("change", () => {
+        if (aiCtxInfo) {
+          aiCtxInfo.innerText = aiCtxSelect.value === "current" ? "Realtime" : "Arsip Riwayat";
+        }
+      });
+    }
 
     aiChips.forEach((chip) => {
       chip.addEventListener("click", () => {
@@ -1309,27 +1364,58 @@
       aiStream.appendChild(aiBubble);
       aiStream.scrollTop = aiStream.scrollHeight;
 
+      const chosenCtx = aiCtxSelect?.value || "current";
+      let targetLogs = [];
+      let targetTitle = "";
+
+      if (chosenCtx === "current") {
+        targetLogs = transcripts;
+        targetTitle = currentMeetingTitle || detectMeetingTitle() || "Meeting Saat Ini";
+      } else {
+        const stored = await new Promise((r) => chrome.storage.local.get([STORAGE_SESSIONS_KEY], r));
+        const sessions = stored[STORAGE_SESSIONS_KEY] || {};
+        const s = sessions[chosenCtx];
+        if (s && s.logs) {
+          targetLogs = s.logs;
+          targetTitle = s.title || "Meeting Terpilih";
+        }
+      }
+
+      if (!targetLogs || targetLogs.length === 0) {
+        aiBubble.innerText = "Transkrip untuk meeting ini masih kosong. Silakan bicara di meeting atau pilih arsip lain.";
+        return;
+      }
+
       chrome.storage.local.get([STORAGE_CONFIG_KEY], async (res) => {
         const cfg = res[STORAGE_CONFIG_KEY] || {};
-        const baseUrl = (cfg.baseUrl || "https://api.openai.com/v1").replace(/\/+$/, "");
+        const baseUrl = (cfg.baseUrl || "http://localhost:2080/v1").replace(/\/+$/, "");
         const apiKey = cfg.apiKey || "";
-        const model = cfg.model || "gpt-4o-mini";
+        const model = cfg.model || "ag/gemini-3.8-flash";
 
-        if (!apiKey && !baseUrl.includes("localhost") && !baseUrl.includes("127.0.0.1")) {
+        const isLocalOrRouter =
+          baseUrl.includes("localhost") ||
+          baseUrl.includes("127.0.0.1") ||
+          baseUrl.includes("router") ||
+          baseUrl.includes(":2080") ||
+          baseUrl.includes(":11434");
+
+        if (!apiKey && !isLocalOrRouter) {
           aiBubble.innerText = "API Key belum diisi di tab Settings.";
           return;
         }
 
-        const contextText = transcripts.map((t) => `[${t.time}] ${t.speaker}: ${t.text}`).join("\n");
-        const promptSystem = `Kamu asisten meeting AI. Jawab pertanyaan user seputar meeting ini secara ringkas dan profesional berdasarkan transkrip berikut:\n\n${contextText}`;
+        const contextText = targetLogs.map((t) => `[${t.time}] ${t.speaker}: ${t.text}`).join("\n");
+        const promptSystem = `Kamu asisten meeting AI. Jawab pertanyaan user seputar meeting "${targetTitle}" secara ringkas, to the point, dan profesional berdasarkan transkrip berikut:\n\n${contextText}`;
 
         try {
+          const headers = { "Content-Type": "application/json" };
+          if (apiKey) {
+            headers["Authorization"] = `Bearer ${apiKey}`;
+          }
+
           const resp = await fetch(`${baseUrl}/chat/completions`, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${apiKey}`
-            },
+            headers: headers,
             body: JSON.stringify({
               model: model,
               messages: [
@@ -1339,6 +1425,12 @@
               temperature: 0.3
             })
           });
+
+          if (!resp.ok) {
+            const errText = await resp.text();
+            throw new Error(`HTTP ${resp.status}: ${errText.slice(0, 150)}`);
+          }
+
           const data = await resp.json();
           aiBubble.innerText = data.choices?.[0]?.message?.content || "Tidak ada respon dari model.";
         } catch (err) {
@@ -1348,13 +1440,51 @@
       });
     }
 
-    // Settings save handler
+    // AI Provider Presets & Settings save handler
+    const preset9Router = shadowRoot.getElementById("preset-9router");
+    const presetOpenAI = shadowRoot.getElementById("preset-openai");
+    const presetGroq = shadowRoot.getElementById("preset-groq");
+    const presetOllama = shadowRoot.getElementById("preset-ollama");
+    const presetHelp = shadowRoot.getElementById("preset-help-text");
+    const cfgBase = shadowRoot.getElementById("cfg-base");
+    const cfgMod = shadowRoot.getElementById("cfg-mod");
+    const cfgKey = shadowRoot.getElementById("cfg-key");
+
+    if (preset9Router) {
+      preset9Router.addEventListener("click", () => {
+        cfgBase.value = "http://localhost:2080/v1";
+        cfgMod.value = "ag/gemini-3.8-flash";
+        if (presetHelp) presetHelp.innerText = "⚡ 9router aktif (http://localhost:2080/v1). API Key opsional.";
+      });
+    }
+    if (presetOpenAI) {
+      presetOpenAI.addEventListener("click", () => {
+        cfgBase.value = "https://api.openai.com/v1";
+        cfgMod.value = "gpt-4o-mini";
+        if (presetHelp) presetHelp.innerText = "OpenAI aktif. Masukkan API Key resmi sk-...";
+      });
+    }
+    if (presetGroq) {
+      presetGroq.addEventListener("click", () => {
+        cfgBase.value = "https://api.groq.com/openai/v1";
+        cfgMod.value = "llama-3.3-70b-versatile";
+        if (presetHelp) presetHelp.innerText = "Groq aktif. Masukkan Groq API Key gsk_...";
+      });
+    }
+    if (presetOllama) {
+      presetOllama.addEventListener("click", () => {
+        cfgBase.value = "http://localhost:11434/v1";
+        cfgMod.value = "llama3.2";
+        if (presetHelp) presetHelp.innerText = "Ollama lokal aktif (tanpa API Key).";
+      });
+    }
+
     const btnSaveCfg = shadowRoot.getElementById("btn-save-cfg-widget");
     btnSaveCfg.addEventListener("click", () => {
       const cfg = {
-        baseUrl: shadowRoot.getElementById("cfg-base").value.trim() || "https://api.openai.com/v1",
-        apiKey: shadowRoot.getElementById("cfg-key").value.trim(),
-        model: shadowRoot.getElementById("cfg-mod").value.trim() || "gpt-4o-mini"
+        baseUrl: cfgBase.value.trim() || "http://localhost:2080/v1",
+        apiKey: cfgKey.value.trim(),
+        model: cfgMod.value.trim() || "ag/gemini-3.8-flash"
       };
       chrome.storage.local.set({ [STORAGE_CONFIG_KEY]: cfg }, () => {
         btnSaveCfg.innerText = "✅ Tersimpan!";
@@ -1391,6 +1521,39 @@
     });
   }
 
+  function populateAiContextOptions() {
+    if (!shadowRoot) return;
+    const ctxSelect = shadowRoot.getElementById("ai-context-select");
+    const ctxInfo = shadowRoot.getElementById("ai-ctx-info");
+    if (!ctxSelect) return;
+
+    const previousVal = ctxSelect.value || "current";
+
+    chrome.storage.local.get([STORAGE_SESSIONS_KEY], (res) => {
+      const sessions = res[STORAGE_SESSIONS_KEY] || {};
+      const list = Object.values(sessions).sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0));
+
+      let optionsHtml = `<option value="current">🔴 Meeting Ini (${transcripts.length} ucapan)</option>`;
+      list.forEach((s) => {
+        if (!s.logs || s.logs.length === 0) return;
+        const dt = s.dateStr || s.dateTimeStr || "";
+        const title = s.title || "Meeting";
+        optionsHtml += `<option value="${s.id}">📁 ${escapeHtml(title)} [${escapeHtml(dt)}] (${s.logs.length} turn)</option>`;
+      });
+
+      ctxSelect.innerHTML = optionsHtml;
+      if (Array.from(ctxSelect.options).some((o) => o.value === previousVal)) {
+        ctxSelect.value = previousVal;
+      } else {
+        ctxSelect.value = "current";
+      }
+
+      if (ctxInfo) {
+        ctxInfo.innerText = ctxSelect.value === "current" ? "Realtime" : "Arsip Riwayat";
+      }
+    });
+  }
+
   function loadFloatingSettings() {
     if (!shadowRoot) return;
     chrome.storage.local.get([STORAGE_CONFIG_KEY], (res) => {
@@ -1398,9 +1561,9 @@
       const baseEl = shadowRoot.getElementById("cfg-base");
       const keyEl = shadowRoot.getElementById("cfg-key");
       const modEl = shadowRoot.getElementById("cfg-mod");
-      if (baseEl) baseEl.value = cfg.baseUrl || "https://api.openai.com/v1";
+      if (baseEl) baseEl.value = cfg.baseUrl || "http://localhost:2080/v1";
       if (keyEl) keyEl.value = cfg.apiKey || "";
-      if (modEl) modEl.value = cfg.model || "gpt-4o-mini";
+      if (modEl) modEl.value = cfg.model || "ag/gemini-3.8-flash";
     });
   }
 
@@ -1414,6 +1577,26 @@
 
     chrome.storage.local.get([STORAGE_SESSIONS_KEY], (res) => {
       const sessions = res[STORAGE_SESSIONS_KEY] || {};
+
+      // Auto-prune home / empty / invalid historical entries
+      let hasPurged = false;
+      for (const sKey of Object.keys(sessions)) {
+        const item = sessions[sKey];
+        if (
+          sKey === "meet_home" ||
+          sKey === "meet_landing" ||
+          sKey.includes("home") ||
+          !item.logs ||
+          item.logs.length === 0
+        ) {
+          delete sessions[sKey];
+          hasPurged = true;
+        }
+      }
+      if (hasPurged) {
+        chrome.storage.local.set({ [STORAGE_SESSIONS_KEY]: sessions });
+      }
+
       let list = Object.values(sessions).sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0));
 
       if (query) {
@@ -1785,6 +1968,8 @@
   }
 
   function initSession() {
+    if (!isActualMeetingRoom()) return;
+
     const key = getMeetingKey();
     currentMeetingId = key;
     currentMeetingTitle = detectMeetingTitle();
@@ -1842,4 +2027,15 @@
   });
 
   initSession();
+
+  // Watch URL changes for SPA navigation into a meeting room
+  let lastNavUrl = window.location.href;
+  setInterval(() => {
+    if (window.location.href !== lastNavUrl) {
+      lastNavUrl = window.location.href;
+      if (isActualMeetingRoom() && !widgetContainer) {
+        initSession();
+      }
+    }
+  }, 1000);
 })();
