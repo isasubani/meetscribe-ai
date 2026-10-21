@@ -255,6 +255,7 @@
       const existing = transcripts[existingIndex];
       if (cleanText !== existing.text || (cleanSpeaker && cleanSpeaker !== existing.speaker)) {
         existing.text = cleanText;
+        if (!existing.time) existing.time = getTimestamp();
         if (cleanSpeaker && cleanSpeaker !== "Participant") {
           existing.speaker = cleanSpeaker;
         }
@@ -956,6 +957,11 @@
         .speaker-name {
           font-size: 10.5px;
           font-weight: 700;
+        }
+        .speaker-time {
+          font-size: 9.5px;
+          color: #64748b;
+          font-variant-numeric: tabular-nums;
         }
         .bubble-text {
           background: rgba(30, 41, 59, 0.6);
@@ -1867,7 +1873,10 @@
         return `
           <div class="item-group">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span class="speaker-name" style="color: ${color};">${escapeHtml(item.speaker)}</span>
+              <div style="display: flex; align-items: baseline; gap: 6px;">
+                <span class="speaker-name" style="color: ${color};">${escapeHtml(item.speaker)}</span>
+                <span class="speaker-time">${escapeHtml(item.time || "")}</span>
+              </div>
               ${tagBadgeHtml}
             </div>
             <div class="bubble-text" style="border-left-color: ${color};">
