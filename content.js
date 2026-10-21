@@ -474,13 +474,14 @@
           background: #64748b;
         }
         .pill-dot.recording {
-          background: #10b981;
-          animation: pulse 1.5s infinite;
+          background: #ef4444;
+          box-shadow: 0 0 8px #ef4444;
+          animation: pulse-red 1.2s infinite;
         }
 
         .widget-card {
-          width: 380px;
-          height: 530px;
+          width: 400px;
+          height: 590px;
           background: rgba(15, 23, 42, 0.97);
           border: 1px solid rgba(255, 255, 255, 0.12);
           border-radius: 14px;
@@ -533,10 +534,26 @@
           border-radius: 50%;
           background: #64748b;
           flex-shrink: 0;
+          transition: all 0.3s;
         }
         .live-dot.active {
-          background: #10b981;
-          box-shadow: 0 0 8px #10b981;
+          background: #ef4444;
+          box-shadow: 0 0 10px #ef4444, 0 0 4px #f87171;
+          animation: pulse-red 1.2s infinite;
+        }
+        @keyframes pulse-red {
+          0% { transform: scale(0.95); opacity: 0.8; }
+          50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 12px #ef4444; }
+          100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .status-recording-text {
+          color: #ef4444 !important;
+          font-weight: 700 !important;
+          animation: text-pulse 1.4s infinite alternate;
+        }
+        @keyframes text-pulse {
+          0% { opacity: 0.8; text-shadow: 0 0 2px rgba(239, 68, 68, 0.4); }
+          100% { opacity: 1; text-shadow: 0 0 8px rgba(239, 68, 68, 0.9); }
         }
         .header-tools {
           display: flex;
@@ -544,21 +561,31 @@
           gap: 5px;
         }
         .btn-record-toggle {
-          background: rgba(16, 185, 129, 0.2);
-          border: 1px solid rgba(16, 185, 129, 0.4);
-          color: #34d399;
+          background: rgba(239, 68, 68, 0.15);
+          border: 1px solid #ef4444;
+          color: #ef4444;
           font-size: 11px;
           font-weight: 700;
           padding: 4px 8px;
           border-radius: 6px;
           cursor: pointer;
-          transition: all 0.15s;
+          transition: all 0.2s;
           white-space: nowrap;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
         }
-        .btn-record-toggle.recording {
-          background: rgba(244, 63, 94, 0.2);
-          border-color: rgba(244, 63, 94, 0.4);
-          color: #fb7185;
+        .btn-record-toggle:hover {
+          background: rgba(239, 68, 68, 0.25);
+        }
+        .btn-record-toggle.connected {
+          background: rgba(16, 185, 129, 0.2);
+          border-color: #10b981;
+          color: #10b981;
+          box-shadow: 0 0 8px rgba(16, 185, 129, 0.35);
+        }
+        .btn-record-toggle.connected:hover {
+          background: rgba(16, 185, 129, 0.3);
         }
         .btn-save-record {
           background: rgba(56, 189, 248, 0.2);
@@ -633,9 +660,11 @@
           overflow: hidden;
         }
         .transcript-toolbar {
-          padding: 8px 10px 4px 10px;
+          padding: 8px 10px 6px 10px;
           display: flex;
           gap: 6px;
+          align-items: center;
+          border-bottom: 1px solid rgba(255,255,255,0.06);
         }
         .search-box {
           flex: 1;
@@ -659,10 +688,201 @@
           font-weight: 600;
           padding: 4px 8px;
           cursor: pointer;
+          white-space: nowrap;
+          display: inline-flex;
+          align-items: center;
+          gap: 3px;
         }
         .btn-tool-action:hover {
           color: #fff;
           border-color: #38bdf8;
+        }
+        .btn-tool-action.active {
+          background: rgba(56, 189, 248, 0.2);
+          border-color: #38bdf8;
+          color: #38bdf8;
+        }
+
+        /* Collapsible Stats Drawer inside Transcript Panel */
+        #transcript-stats-drawer {
+          display: none;
+          max-height: 180px;
+          overflow-y: auto;
+          background: rgba(15, 23, 42, 0.95);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          padding: 8px 10px;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .stats-summary-card {
+          background: rgba(30, 41, 59, 0.7);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 8px;
+          padding: 6px 8px;
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 4px;
+        }
+        .stat-metric {
+          display: flex;
+          flex-direction: column;
+          gap: 1px;
+        }
+        .stat-metric-val {
+          font-size: 11.5px;
+          font-weight: 700;
+          color: #38bdf8;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .stat-metric-lbl {
+          font-size: 8.5px;
+          color: #94a3b8;
+          text-transform: uppercase;
+        }
+        .speaker-stat-row {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          background: rgba(30, 41, 59, 0.5);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: 6px;
+          padding: 5px 8px;
+        }
+        .speaker-stat-header {
+          display: flex;
+          justify-content: space-between;
+          font-size: 10.5px;
+          font-weight: 600;
+        }
+        .speaker-stat-bar-track {
+          width: 100%;
+          height: 5px;
+          background: rgba(15, 23, 42, 0.8);
+          border-radius: 9999px;
+          overflow: hidden;
+        }
+        .speaker-stat-bar-fill {
+          height: 100%;
+          border-radius: 9999px;
+          transition: width 0.3s ease;
+        }
+
+        /* In-Transcript Docked Ask AI */
+        #transcript-ai-dock {
+          background: rgba(15, 23, 42, 0.95);
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          padding: 6px 10px 8px 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+        }
+        .ai-dock-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 10px;
+        }
+        .ai-dock-title {
+          font-weight: 700;
+          color: #38bdf8;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+        .ai-dock-badge {
+          background: rgba(56, 189, 248, 0.15);
+          color: #38bdf8;
+          padding: 1px 6px;
+          border-radius: 4px;
+          font-size: 9px;
+          font-weight: 600;
+        }
+        .ai-quick-chips {
+          display: flex;
+          gap: 4px;
+          overflow-x: auto;
+          padding-bottom: 1px;
+        }
+        .ai-chip {
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.1);
+          color: #cbd5e1;
+          padding: 2px 7px;
+          border-radius: 9999px;
+          font-size: 9.5px;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: all 0.15s;
+        }
+        .ai-chip:hover {
+          border-color: #38bdf8;
+          color: #fff;
+          background: rgba(56, 189, 248, 0.15);
+        }
+        .ai-chat-stream {
+          max-height: 90px;
+          min-height: 40px;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+          font-size: 10.5px;
+          background: rgba(10, 16, 28, 0.6);
+          padding: 6px 8px;
+          border-radius: 6px;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .ai-msg-bubble {
+          padding: 5px 8px;
+          border-radius: 6px;
+          line-height: 1.35;
+          word-break: break-word;
+        }
+        .ai-msg-bubble.user {
+          background: #0284c7;
+          color: #fff;
+          align-self: flex-end;
+          max-width: 88%;
+        }
+        .ai-msg-bubble.assistant {
+          background: rgba(30, 41, 59, 0.85);
+          color: #e2e8f0;
+          align-self: flex-start;
+          max-width: 92%;
+          border-left: 2px solid #38bdf8;
+        }
+        .ai-input-box {
+          display: flex;
+          gap: 4px;
+        }
+        .ai-input-field {
+          flex: 1;
+          background: rgba(30, 41, 59, 0.9);
+          border: 1px solid rgba(255,255,255,0.12);
+          border-radius: 6px;
+          padding: 5px 8px;
+          color: #fff;
+          font-size: 10.5px;
+          outline: none;
+        }
+        .ai-input-field:focus {
+          border-color: #38bdf8;
+        }
+        .btn-ai-send {
+          background: #38bdf8;
+          color: #042138;
+          border: none;
+          border-radius: 6px;
+          padding: 0 10px;
+          font-weight: 700;
+          font-size: 10.5px;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-ai-send:hover {
+          background: #7dd3fc;
         }
         .tag-badge {
           display: inline-flex;
@@ -806,150 +1026,7 @@
           background: rgba(244, 63, 94, 0.1);
         }
 
-        /* View: Stats & Engagement */
-        #panel-stats {
-          flex: 1;
-          display: none;
-          flex-direction: column;
-          padding: 10px;
-          gap: 10px;
-          overflow-y: auto;
-        }
-        .stats-summary-card {
-          background: rgba(30, 41, 59, 0.7);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 8px;
-          padding: 8px 10px;
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 6px;
-        }
-        .stat-metric {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-        .stat-metric-val {
-          font-size: 13px;
-          font-weight: 700;
-          color: #38bdf8;
-        }
-        .stat-metric-lbl {
-          font-size: 9.5px;
-          color: #94a3b8;
-          text-transform: uppercase;
-        }
-        .speaker-stat-row {
-          display: flex;
-          flex-direction: column;
-          gap: 5px;
-          background: rgba(30, 41, 59, 0.5);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          border-radius: 6px;
-          padding: 7px 9px;
-        }
-        .speaker-stat-header {
-          display: flex;
-          justify-content: space-between;
-          font-size: 11px;
-          font-weight: 600;
-        }
-        .speaker-stat-bar-track {
-          width: 100%;
-          height: 6px;
-          background: rgba(15, 23, 42, 0.8);
-          border-radius: 9999px;
-          overflow: hidden;
-        }
-        .speaker-stat-bar-fill {
-          height: 100%;
-          border-radius: 9999px;
-          transition: width 0.3s ease;
-        }
-
-        /* View 3: Ask AI */
-        #panel-ai {
-          flex: 1;
-          display: none;
-          flex-direction: column;
-          padding: 10px;
-          gap: 6px;
-        }
-        .ai-chat-stream {
-          flex: 1;
-          overflow-y: auto;
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          font-size: 11px;
-          background: rgba(10, 16, 28, 0.6);
-          padding: 8px;
-          border-radius: 8px;
-        }
-        .ai-msg-bubble {
-          padding: 6px 9px;
-          border-radius: 6px;
-          line-height: 1.4;
-          word-break: break-word;
-        }
-        .ai-msg-bubble.user {
-          background: #0284c7;
-          color: #fff;
-          align-self: flex-end;
-          max-width: 85%;
-        }
-        .ai-msg-bubble.assistant {
-          background: rgba(30, 41, 59, 0.8);
-          color: #e2e8f0;
-          align-self: flex-start;
-          max-width: 90%;
-        }
-        .ai-quick-chips {
-          display: flex;
-          gap: 4px;
-          overflow-x: auto;
-          padding-bottom: 2px;
-        }
-        .ai-chip {
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.1);
-          color: #cbd5e1;
-          padding: 3px 7px;
-          border-radius: 9999px;
-          font-size: 10px;
-          cursor: pointer;
-          white-space: nowrap;
-        }
-        .ai-chip:hover {
-          border-color: #38bdf8;
-          color: #fff;
-        }
-        .ai-input-box {
-          display: flex;
-          gap: 4px;
-        }
-        .ai-input-field {
-          flex: 1;
-          background: rgba(30, 41, 59, 0.9);
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 6px;
-          padding: 6px 8px;
-          color: #fff;
-          font-size: 11px;
-          outline: none;
-        }
-        .btn-ai-send {
-          background: #38bdf8;
-          color: #042138;
-          border: none;
-          border-radius: 6px;
-          padding: 0 10px;
-          font-weight: 700;
-          font-size: 11px;
-          cursor: pointer;
-        }
-
-        /* View 4: Settings */
+        /* View: Settings */
         #panel-settings {
           flex: 1;
           display: none;
@@ -1044,7 +1121,7 @@
           </div>
           <div class="header-tools">
             <button class="btn-save-record" id="btn-save-now" title="Save / Update transkrip ke Riwayat">💾 Save</button>
-            <button class="btn-record-toggle" id="btn-floating-record">⚡ Connect</button>
+            <button class="btn-record-toggle" id="btn-floating-record">⏹ Disconnected</button>
             <button class="tool-btn" id="btn-minimize" title="Minimize">—</button>
             <button class="tool-btn" id="btn-close" title="Hide">✕</button>
           </div>
@@ -1053,21 +1130,53 @@
         <div class="widget-tabs">
           <button class="tab-btn active" data-target="panel-transcript">📝 Transkrip</button>
           <button class="tab-btn" data-target="panel-history">📁 Riwayat</button>
-          <button class="tab-btn" data-target="panel-stats">📊 Stats</button>
-          <button class="tab-btn" data-target="panel-ai">🤖 Ask AI</button>
           <button class="tab-btn" data-target="panel-settings">⚙️ Settings</button>
         </div>
 
         <div class="widget-content-panel">
-          <!-- PANEL 1: Transkrip -->
+          <!-- PANEL 1: Transkrip (Includes Stats Drawer & In-Transcript Ask AI) -->
           <div id="panel-transcript">
             <div class="transcript-toolbar">
               <input type="text" class="search-box" id="widget-search" placeholder="Cari percakapan...">
+              <button class="btn-tool-action" id="btn-toggle-stats" title="Tampilkan / Sembunyikan Statistik">📊 Stats</button>
               <button class="btn-tool-action" id="btn-clear-cur">🗑️ Clear</button>
             </div>
+
+            <!-- Collapsible Stats Drawer -->
+            <div id="transcript-stats-drawer">
+              <div id="stats-content-area" style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="text-align: center; color: #64748b; font-size: 11px; padding: 10px 0;">
+                  Belum ada percakapan untuk dihitung statistik & engagement.
+                </div>
+              </div>
+            </div>
+
+            <!-- Main Transcript Scroll Body -->
             <div class="transcript-scroll" id="widget-transcript-body">
               <div style="text-align: center; color: #64748b; margin: auto; font-size: 11px;">
                 Merekam transkrip realtime...<br>Bicara untuk melihat teks masuk.
+              </div>
+            </div>
+
+            <!-- Docked Ask AI directly inside Transcript -->
+            <div id="transcript-ai-dock">
+              <div class="ai-dock-header">
+                <div class="ai-dock-title">
+                  <span>🤖 Ask AI Transkrip</span>
+                </div>
+                <span class="ai-dock-badge" id="ai-transcript-context-badge">Realtime Meeting</span>
+              </div>
+              <div class="ai-quick-chips">
+                <button class="ai-chip" data-prompt="Ringkas poin penting percakapan ini secara singkat.">✨ Ringkasan</button>
+                <button class="ai-chip" data-prompt="Tuliskan Action Items dan siapa penanggung jawabnya.">✅ Action Items</button>
+                <button class="ai-chip" data-prompt="Apa keputusan utama meeting ini?">🎯 Keputusan</button>
+              </div>
+              <div class="ai-chat-stream" id="widget-ai-stream">
+                <div class="ai-msg-bubble assistant">Halo! Ajukan pertanyaan seputar transkrip percakapan meeting ini.</div>
+              </div>
+              <div class="ai-input-box">
+                <input type="text" class="ai-input-field" id="widget-ai-input" placeholder="Tanyakan seputar transkrip meeting...">
+                <button class="btn-ai-send" id="btn-widget-ai-send">Kirim</button>
               </div>
             </div>
           </div>
@@ -1084,42 +1193,7 @@
             </div>
           </div>
 
-          <!-- PANEL 2.5: Speaker Stats & Engagement -->
-          <div id="panel-stats">
-            <div id="stats-content-area" style="display: flex; flex-direction: column; gap: 10px;">
-              <div style="text-align: center; color: #64748b; margin: auto; font-size: 11px; padding: 20px 0;">
-                Belum ada percakapan untuk dihitung statistik & engagement.
-              </div>
-            </div>
-          </div>
-
-          <!-- PANEL 3: Ask AI -->
-          <div id="panel-ai">
-            <div style="display: flex; flex-direction: column; gap: 4px; background: rgba(30, 41, 59, 0.5); padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08);">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span class="setting-label" style="font-size: 9.5px;">Konteks Transkrip:</span>
-                <span id="ai-ctx-info" style="font-size: 9.5px; color: #38bdf8;">Realtime</span>
-              </div>
-              <select id="ai-context-select" class="setting-input" style="padding: 4px 6px; font-size: 11px; cursor: pointer;">
-                <option value="current">🔴 Meeting Saat Ini (Realtime)</option>
-              </select>
-            </div>
-
-            <div class="ai-quick-chips">
-              <button class="ai-chip" data-prompt="Ringkas poin penting percakapan ini secara singkat.">✨ Ringkasan</button>
-              <button class="ai-chip" data-prompt="Tuliskan Action Items dan siapa penanggung jawabnya.">✅ Action Items</button>
-              <button class="ai-chip" data-prompt="Apa keputusan utama meeting ini?">🎯 Keputusan</button>
-            </div>
-            <div class="ai-chat-stream" id="widget-ai-stream">
-              <div class="ai-msg-bubble assistant">Halo! Ajukan pertanyaan seputar transkrip meeting ini.</div>
-            </div>
-            <div class="ai-input-box">
-              <input type="text" class="ai-input-field" id="widget-ai-input" placeholder="Tanyakan seputar meeting...">
-              <button class="btn-ai-send" id="btn-widget-ai-send">Kirim</button>
-            </div>
-          </div>
-
-          <!-- PANEL 4: Settings -->
+          <!-- PANEL 3: Settings -->
           <div id="panel-settings">
             <div class="setting-field">
               <label class="setting-label">Bahasa Captions (Google Meet)</label>
@@ -1131,10 +1205,10 @@
             </div>
             <div style="border-top: 1px solid rgba(255, 255, 255, 0.08); margin: 2px 0;"></div>
             <div style="font-size: 11px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 4px;">
-              ⚡ Konfigurasi 9router
+              ⚙️ Configuration AI Provider
             </div>
             <div class="setting-field">
-              <label class="setting-label">9router Base URL</label>
+              <label class="setting-label">AI Provider Base URL</label>
               <input type="text" class="setting-input" id="cfg-base" placeholder="http://localhost:2080/v1 atau https://omniroute...">
             </div>
             <div class="setting-field">
@@ -1180,25 +1254,45 @@
     const header = shadowRoot.getElementById("widget-drag-header");
     const tabBtns = shadowRoot.querySelectorAll(".tab-btn");
 
-    // Tab Navigation
+    // Tab Navigation (3 tabs: Transkrip, Riwayat, Settings)
     tabBtns.forEach((tab) => {
       tab.addEventListener("click", () => {
         tabBtns.forEach((t) => t.classList.remove("active"));
         tab.classList.add("active");
         const targetId = tab.getAttribute("data-target");
 
-        shadowRoot.getElementById("panel-transcript").style.display = targetId === "panel-transcript" ? "flex" : "none";
-        shadowRoot.getElementById("panel-history").style.display = targetId === "panel-history" ? "flex" : "none";
-        shadowRoot.getElementById("panel-stats").style.display = targetId === "panel-stats" ? "flex" : "none";
-        shadowRoot.getElementById("panel-ai").style.display = targetId === "panel-ai" ? "flex" : "none";
-        shadowRoot.getElementById("panel-settings").style.display = targetId === "panel-settings" ? "flex" : "none";
+        const panelTranscript = shadowRoot.getElementById("panel-transcript");
+        const panelHistory = shadowRoot.getElementById("panel-history");
+        const panelSettings = shadowRoot.getElementById("panel-settings");
 
-        if (targetId === "panel-stats") renderFloatingStats();
+        if (panelTranscript) panelTranscript.style.display = targetId === "panel-transcript" ? "flex" : "none";
+        if (panelHistory) panelHistory.style.display = targetId === "panel-history" ? "flex" : "none";
+        if (panelSettings) panelSettings.style.display = targetId === "panel-settings" ? "flex" : "none";
+
+        if (targetId === "panel-transcript") {
+          const statsDrawer = shadowRoot.getElementById("transcript-stats-drawer");
+          if (statsDrawer && statsDrawer.style.display === "flex") {
+            renderFloatingStats();
+          }
+        }
         if (targetId === "panel-history") renderFloatingHistory();
-        if (targetId === "panel-ai") populateAiContextOptions();
         if (targetId === "panel-settings") loadFloatingSettings();
       });
     });
+
+    // Toggle Collapsible Stats Drawer inside Transkrip
+    const btnToggleStats = shadowRoot.getElementById("btn-toggle-stats");
+    const statsDrawer = shadowRoot.getElementById("transcript-stats-drawer");
+    if (btnToggleStats && statsDrawer) {
+      btnToggleStats.addEventListener("click", () => {
+        const isHidden = statsDrawer.style.display === "none" || !statsDrawer.style.display;
+        statsDrawer.style.display = isHidden ? "flex" : "none";
+        btnToggleStats.classList.toggle("active", isHidden);
+        if (isHidden) {
+          renderFloatingStats();
+        }
+      });
+    }
 
     // Save record to history button
     btnSaveNow.addEventListener("click", async () => {
@@ -1314,21 +1408,12 @@
       URL.revokeObjectURL(url);
     });
 
-    // Floating AI Question handler
+    // In-Transcript Ask AI Question handler
     const aiInput = shadowRoot.getElementById("widget-ai-input");
     const aiBtnSend = shadowRoot.getElementById("btn-widget-ai-send");
     const aiStream = shadowRoot.getElementById("widget-ai-stream");
     const aiChips = shadowRoot.querySelectorAll(".ai-chip");
-    const aiCtxSelect = shadowRoot.getElementById("ai-context-select");
-    const aiCtxInfo = shadowRoot.getElementById("ai-ctx-info");
-
-    if (aiCtxSelect) {
-      aiCtxSelect.addEventListener("change", () => {
-        if (aiCtxInfo) {
-          aiCtxInfo.innerText = aiCtxSelect.value === "current" ? "Realtime" : "Arsip Riwayat";
-        }
-      });
-    }
+    const aiContextBadge = shadowRoot.getElementById("ai-transcript-context-badge");
 
     aiChips.forEach((chip) => {
       chip.addEventListener("click", () => {
@@ -1354,29 +1439,15 @@
 
       const aiBubble = document.createElement("div");
       aiBubble.className = "ai-msg-bubble assistant";
-      aiBubble.innerText = "Sedang menganalisis...";
+      aiBubble.innerText = "Sedang menganalisis transkrip...";
       aiStream.appendChild(aiBubble);
       aiStream.scrollTop = aiStream.scrollHeight;
 
-      const chosenCtx = aiCtxSelect?.value || "current";
-      let targetLogs = [];
-      let targetTitle = "";
-
-      if (chosenCtx === "current") {
-        targetLogs = transcripts;
-        targetTitle = currentMeetingTitle || detectMeetingTitle() || "Meeting Saat Ini";
-      } else {
-        const stored = await new Promise((r) => chrome.storage.local.get([STORAGE_SESSIONS_KEY], r));
-        const sessions = stored[STORAGE_SESSIONS_KEY] || {};
-        const s = sessions[chosenCtx];
-        if (s && s.logs) {
-          targetLogs = s.logs;
-          targetTitle = s.title || "Meeting Terpilih";
-        }
-      }
+      const targetLogs = transcripts;
+      const targetTitle = currentMeetingTitle || detectMeetingTitle() || "Meeting Saat Ini";
 
       if (!targetLogs || targetLogs.length === 0) {
-        aiBubble.innerText = "Transkrip untuk meeting ini masih kosong. Silakan bicara di meeting atau pilih arsip lain.";
+        aiBubble.innerText = "Transkrip masih kosong. Mulai bicara di meeting atau klik 'Buka' pada arsip di tab Riwayat.";
         return;
       }
 
@@ -1399,7 +1470,7 @@
         }
 
         const contextText = targetLogs.map((t) => `[${t.time}] ${t.speaker}: ${t.text}`).join("\n");
-        const promptSystem = `Kamu asisten meeting AI. Jawab pertanyaan user seputar meeting "${targetTitle}" secara ringkas, to the point, dan profesional berdasarkan transkrip berikut:\n\n${contextText}`;
+        const promptSystem = `Kamu asisten meeting AI. Jawab pertanyaan user seputar transkrip percakapan meeting "${targetTitle}" secara ringkas, to the point, dan profesional berdasarkan transkrip berikut:\n\n${contextText}`;
 
         chrome.runtime.sendMessage(
           {
@@ -1473,39 +1544,6 @@
     document.addEventListener("mouseup", () => {
       isDragging = false;
       if (header) header.style.cursor = "grab";
-    });
-  }
-
-  function populateAiContextOptions() {
-    if (!shadowRoot) return;
-    const ctxSelect = shadowRoot.getElementById("ai-context-select");
-    const ctxInfo = shadowRoot.getElementById("ai-ctx-info");
-    if (!ctxSelect) return;
-
-    const previousVal = ctxSelect.value || "current";
-
-    chrome.storage.local.get([STORAGE_SESSIONS_KEY], (res) => {
-      const sessions = res[STORAGE_SESSIONS_KEY] || {};
-      const list = Object.values(sessions).sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0));
-
-      let optionsHtml = `<option value="current">🔴 Meeting Ini (${transcripts.length} ucapan)</option>`;
-      list.forEach((s) => {
-        if (!s.logs || s.logs.length === 0) return;
-        const dt = s.dateStr || s.dateTimeStr || "";
-        const title = s.title || "Meeting";
-        optionsHtml += `<option value="${s.id}">📁 ${escapeHtml(title)} [${escapeHtml(dt)}] (${s.logs.length} turn)</option>`;
-      });
-
-      ctxSelect.innerHTML = optionsHtml;
-      if (Array.from(ctxSelect.options).some((o) => o.value === previousVal)) {
-        ctxSelect.value = previousVal;
-      } else {
-        ctxSelect.value = "current";
-      }
-
-      if (ctxInfo) {
-        ctxInfo.innerText = ctxSelect.value === "current" ? "Realtime" : "Arsip Riwayat";
-      }
     });
   }
 
@@ -1614,8 +1652,23 @@
             transcripts = sessions[sId].logs;
             currentMeetingTitle = sessions[sId].title || detectMeetingTitle();
             updateFloatingWidget();
+
             const transTab = shadowRoot.querySelector(".tab-btn[data-target='panel-transcript']");
             if (transTab) transTab.click();
+
+            const aiBadge = shadowRoot.getElementById("ai-transcript-context-badge");
+            if (aiBadge) {
+              aiBadge.innerText = `📁 Arsip: ${(currentMeetingTitle || "Meeting").slice(0, 18)}`;
+            }
+
+            const aiStream = shadowRoot.getElementById("widget-ai-stream");
+            if (aiStream) {
+              const infoBubble = document.createElement("div");
+              infoBubble.className = "ai-msg-bubble assistant";
+              infoBubble.innerHTML = `📁 <strong>Transkrip "${escapeHtml(currentMeetingTitle)}"</strong> dimuat (${transcripts.length} percakapan). Ask AI siap menjawab pertanyaan dari transkrip ini!`;
+              aiStream.appendChild(infoBubble);
+              aiStream.scrollTop = aiStream.scrollHeight;
+            }
           }
         });
       });
@@ -1755,25 +1808,31 @@
     }
 
     if (isRecordingActive) {
-      if (statusText) statusText.innerText = "● Recording";
+      if (statusText) {
+        statusText.innerText = "● Merekam Transkrip";
+        statusText.className = "status-recording-text";
+      }
       if (headerDot) headerDot.className = "live-dot active";
       if (pillDot) pillDot.className = "pill-dot recording";
       if (btnRecord) {
-        btnRecord.innerText = "⏹ Disconnect";
-        btnRecord.className = "btn-record-toggle recording";
+        btnRecord.innerText = "⚡ Connected";
+        btnRecord.className = "btn-record-toggle connected";
       }
     } else {
-      if (statusText) statusText.innerText = "Standby";
+      if (statusText) {
+        statusText.innerText = "Standby";
+        statusText.className = "";
+      }
       if (headerDot) headerDot.className = "live-dot";
       if (pillDot) pillDot.className = "pill-dot";
       if (btnRecord) {
-        btnRecord.innerText = "⚡ Connect";
+        btnRecord.innerText = "⏹ Disconnected";
         btnRecord.className = "btn-record-toggle";
       }
     }
 
-    const statsPanel = shadowRoot.getElementById("panel-stats");
-    if (statsPanel && statsPanel.style.display === "flex") {
+    const statsDrawer = shadowRoot.getElementById("transcript-stats-drawer");
+    if (statsDrawer && statsDrawer.style.display === "flex") {
       renderFloatingStats();
     }
 
@@ -1790,7 +1849,7 @@
     if (filtered.length === 0) {
       body.innerHTML = `
         <div style="text-align: center; color: #64748b; margin: auto; font-size: 11px;">
-          ${query ? "Tidak ada percakapan yang cocok dengan pencarian." : isRecordingActive ? "Merekam transkrip realtime...<br>Bicara untuk melihat teks masuk." : "Klik ⚡ Connect untuk mulai merekam percakapan meeting."}
+          ${query ? "Tidak ada percakapan yang cocok dengan pencarian." : isRecordingActive ? "Merekam transkrip realtime...<br>Bicara untuk melihat teks masuk." : "Klik ⏹ Disconnected di atas untuk mengaktifkan rekaman percakapan."}
         </div>
       `;
       return;
