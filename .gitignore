@@ -1,0 +1,24 @@
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Secrets & Environment variables
+.env
+.env.*
+*.env
+*.local
+credentials.json
+*token*
+*secret*
+*.pem
+*.key
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*

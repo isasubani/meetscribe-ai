@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "MeetScribe AI - Meeting Transcript & Copilot",
+  "version": "1.2.0",
+  "description": "Realtime meeting transcript recorder & AI copilot for Microsoft Teams, Google Meet, and Zoom Web.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "*://teams.live.com/*",
+    "*://teams.microsoft.com/*",
+    "*://teams.cloud.microsoft/*",
+    "*://meet.google.com/*",
+    "*://*.zoom.us/*",
+    "http://*/*",
+    "https://*/*"
+  ],
+  "action": {
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    },
+    "default_popup": "popup.html",
+    "default_title": "MeetScribe AI"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://teams.live.com/*",
+        "*://teams.microsoft.com/*",
+        "*://teams.cloud.microsoft/*",
+        "*://meet.google.com/*",
+        "*://*.zoom.us/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
