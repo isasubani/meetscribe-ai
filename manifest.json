@@ -32,6 +32,9 @@
     "default_popup": "popup.html",
     "default_title": "MeetScribe AI"
   },
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": [

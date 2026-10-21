@@ -1407,36 +1407,31 @@
         const contextText = targetLogs.map((t) => `[${t.time}] ${t.speaker}: ${t.text}`).join("\n");
         const promptSystem = `Kamu asisten meeting AI. Jawab pertanyaan user seputar meeting "${targetTitle}" secara ringkas, to the point, dan profesional berdasarkan transkrip berikut:\n\n${contextText}`;
 
-        try {
-          const headers = { "Content-Type": "application/json" };
-          if (apiKey) {
-            headers["Authorization"] = `Bearer ${apiKey}`;
-          }
-
-          const resp = await fetch(`${baseUrl}/chat/completions`, {
-            method: "POST",
-            headers: headers,
-            body: JSON.stringify({
+        chrome.runtime.sendMessage(
+          {
+            action: "AI_CHAT_COMPLETION",
+            payload: {
+              baseUrl: baseUrl,
+              apiKey: apiKey,
               model: model,
               messages: [
                 { role: "system", content: promptSystem },
                 { role: "user", content: q }
               ],
               temperature: 0.3
-            })
-          });
-
-          if (!resp.ok) {
-            const errText = await resp.text();
-            throw new Error(`HTTP ${resp.status}: ${errText.slice(0, 150)}`);
+            }
+          },
+          (response) => {
+            if (chrome.runtime.lastError) {
+              aiBubble.innerText = `Error: ${chrome.runtime.lastError.message}`;
+            } else if (!response || !response.success) {
+              aiBubble.innerText = `Gagal: ${response?.error || "Tidak ada respon dari router AI."}`;
+            } else {
+              aiBubble.innerText = response.data?.choices?.[0]?.message?.content || "Tidak ada respon dari model.";
+            }
+            aiStream.scrollTop = aiStream.scrollHeight;
           }
-
-          const data = await resp.json();
-          aiBubble.innerText = data.choices?.[0]?.message?.content || "Tidak ada respon dari model.";
-        } catch (err) {
-          aiBubble.innerText = `Gagal: ${err.message}`;
-        }
-        aiStream.scrollTop = aiStream.scrollHeight;
+        );
       });
     }
 
