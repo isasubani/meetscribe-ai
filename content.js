@@ -1122,16 +1122,6 @@
           <!-- PANEL 4: Settings -->
           <div id="panel-settings">
             <div class="setting-field">
-              <label class="setting-label">Preset Provider AI</label>
-              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                <button type="button" class="btn-tool-action" id="preset-9router" style="flex: 1; min-width: 70px;">⚡ 9router</button>
-                <button type="button" class="btn-tool-action" id="preset-openai" style="flex: 1; min-width: 65px;">OpenAI</button>
-                <button type="button" class="btn-tool-action" id="preset-groq" style="flex: 1; min-width: 55px;">Groq</button>
-                <button type="button" class="btn-tool-action" id="preset-ollama" style="flex: 1; min-width: 60px;">Ollama</button>
-              </div>
-              <span id="preset-help-text" style="font-size: 9.5px; color: #38bdf8; min-height: 12px; margin-top: 2px;"></span>
-            </div>
-            <div class="setting-field">
               <label class="setting-label">Bahasa Captions (Google Meet)</label>
               <div style="display: flex; gap: 4px;">
                 <button class="btn-tool-action" id="btn-lang-id" style="flex: 1;">🇮🇩 Indonesia</button>
@@ -1139,20 +1129,24 @@
               </div>
               <span id="lang-switch-status" style="font-size: 10px; color: #38bdf8; min-height: 14px;"></span>
             </div>
+            <div style="border-top: 1px solid rgba(255, 255, 255, 0.08); margin: 2px 0;"></div>
+            <div style="font-size: 11px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 4px;">
+              ⚡ Konfigurasi 9router
+            </div>
             <div class="setting-field">
-              <label class="setting-label">API Base URL</label>
-              <input type="text" class="setting-input" id="cfg-base" placeholder="http://localhost:2080/v1 atau https://api.openai.com/v1">
+              <label class="setting-label">9router Base URL</label>
+              <input type="text" class="setting-input" id="cfg-base" placeholder="http://localhost:2080/v1 atau https://omniroute...">
             </div>
             <div class="setting-field">
               <div style="display: flex; justify-content: space-between;">
-                <label class="setting-label">API Key</label>
-                <span style="font-size: 9px; color: #94a3b8;">(Opsional untuk 9router / Ollama)</span>
+                <label class="setting-label">API Key / Token</label>
+                <span style="font-size: 9px; color: #94a3b8;">(Opsional jika lokal)</span>
               </div>
-              <input type="password" class="setting-input" id="cfg-key" placeholder="sk-... / kosongkan jika router lokal">
+              <input type="password" class="setting-input" id="cfg-key" placeholder="Bearer token / kosongkan jika tanpa auth">
             </div>
             <div class="setting-field">
-              <label class="setting-label">Model</label>
-              <input type="text" class="setting-input" id="cfg-mod" placeholder="ag/gemini-3.8-flash / gpt-4o-mini">
+              <label class="setting-label">Model ID</label>
+              <input type="text" class="setting-input" id="cfg-mod" placeholder="ag/gemini-3.8-flash">
             </div>
             <button class="btn-save-setting" id="btn-save-cfg-widget">Simpan Konfigurasi</button>
           </div>
@@ -1435,44 +1429,10 @@
       });
     }
 
-    // AI Provider Presets & Settings save handler
-    const preset9Router = shadowRoot.getElementById("preset-9router");
-    const presetOpenAI = shadowRoot.getElementById("preset-openai");
-    const presetGroq = shadowRoot.getElementById("preset-groq");
-    const presetOllama = shadowRoot.getElementById("preset-ollama");
-    const presetHelp = shadowRoot.getElementById("preset-help-text");
+    // 9router Settings save handler
     const cfgBase = shadowRoot.getElementById("cfg-base");
     const cfgMod = shadowRoot.getElementById("cfg-mod");
     const cfgKey = shadowRoot.getElementById("cfg-key");
-
-    if (preset9Router) {
-      preset9Router.addEventListener("click", () => {
-        cfgBase.value = "http://localhost:2080/v1";
-        cfgMod.value = "ag/gemini-3.8-flash";
-        if (presetHelp) presetHelp.innerText = "⚡ 9router aktif (http://localhost:2080/v1). API Key opsional.";
-      });
-    }
-    if (presetOpenAI) {
-      presetOpenAI.addEventListener("click", () => {
-        cfgBase.value = "https://api.openai.com/v1";
-        cfgMod.value = "gpt-4o-mini";
-        if (presetHelp) presetHelp.innerText = "OpenAI aktif. Masukkan API Key resmi sk-...";
-      });
-    }
-    if (presetGroq) {
-      presetGroq.addEventListener("click", () => {
-        cfgBase.value = "https://api.groq.com/openai/v1";
-        cfgMod.value = "llama-3.3-70b-versatile";
-        if (presetHelp) presetHelp.innerText = "Groq aktif. Masukkan Groq API Key gsk_...";
-      });
-    }
-    if (presetOllama) {
-      presetOllama.addEventListener("click", () => {
-        cfgBase.value = "http://localhost:11434/v1";
-        cfgMod.value = "llama3.2";
-        if (presetHelp) presetHelp.innerText = "Ollama lokal aktif (tanpa API Key).";
-      });
-    }
 
     const btnSaveCfg = shadowRoot.getElementById("btn-save-cfg-widget");
     btnSaveCfg.addEventListener("click", () => {
