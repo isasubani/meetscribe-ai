@@ -1478,9 +1478,40 @@
         const contextText = targetLogs.map((t) => `[${t.time}] ${t.speaker}: ${t.text}`).join("\n");
         const promptSystem = `Kamu asisten meeting AI. Jawab pertanyaan user seputar transkrip percakapan meeting "${targetTitle}" secara ringkas, to the point, dan profesional berdasarkan transkrip berikut:\n\n${contextText}`;
 
-        chrome.runtime.sendMessage(
-          {
-            action: "AI_CHAT_COMPLETION",
+        let hasReceivedFirstChunk = false;
+        try {
+          const port = chrome.runtime.connect({ name: "AI_STREAM_PORT" });
+
+          port.onMessage.addListener((msg) => {
+            if (msg.type === "chunk") {
+              if (!hasReceivedFirstChunk) {
+                aiBubble.innerText = "";
+                hasReceivedFirstChunk = true;
+              }
+              aiBubble.innerText += msg.text;
+              aiStream.scrollTop = aiStream.scrollHeight;
+            } else if (msg.type === "error") {
+              if (!hasReceivedFirstChunk) {
+                aiBubble.innerText = `Gagal: ${msg.error}`;
+              } else {
+                aiBubble.innerText += `\n[Error: ${msg.error}]`;
+              }
+              port.disconnect();
+            } else if (msg.type === "done") {
+              if (!hasReceivedFirstChunk && !aiBubble.innerText.trim()) {
+                aiBubble.innerText = "Tidak ada respon dari model.";
+              }
+              port.disconnect();
+            }
+          });
+
+          port.onDisconnect.addListener(() => {
+            if (chrome.runtime.lastError && !hasReceivedFirstChunk) {
+              aiBubble.innerText = `Error: ${chrome.runtime.lastError.message}`;
+            }
+          });
+
+          port.postMessage({
             payload: {
               baseUrl: baseUrl,
               apiKey: apiKey,
@@ -1491,18 +1522,10 @@
               ],
               temperature: 0.3
             }
-          },
-          (response) => {
-            if (chrome.runtime.lastError) {
-              aiBubble.innerText = `Error: ${chrome.runtime.lastError.message}`;
-            } else if (!response || !response.success) {
-              aiBubble.innerText = `Gagal: ${response?.error || "Tidak ada respon dari router AI."}`;
-            } else {
-              aiBubble.innerText = response.data?.choices?.[0]?.message?.content || "Tidak ada respon dari model.";
-            }
-            aiStream.scrollTop = aiStream.scrollHeight;
-          }
-        );
+          });
+        } catch (connErr) {
+          aiBubble.innerText = `Gagal streaming: ${connErr.message}`;
+        }
       });
     }
 
