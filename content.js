@@ -100,16 +100,34 @@
           title = document.title.replace(/\|.*$/, "").replace(/^\(\d+\)\s*/, "").trim();
         }
       } else if (host.includes("meet.google")) {
-        const titleEl = document.querySelector('[data-meeting-title], [jsname="r4nke"], div[class*="u6vdEc"]');
+        const titleEl = document.querySelector('[data-meeting-title], [jsname="r4nke"], div[class*="u6vdEc"], [data-self-name]');
         title = titleEl ? titleEl.innerText.trim() : "";
         if (!title && document.title) {
-          title = document.title.replace(/- Google Meet.*$/, "").trim();
+          const docTitle = document.title.replace(/ - Google Meet.*$/i, "").replace(/- Google Meet.*$/i, "").replace(/^Meet - /i, "").trim();
+          if (docTitle && !docTitle.toLowerCase().includes("meet.google.com")) {
+            title = docTitle;
+          }
+        }
+        if (!title) {
+          const path = window.location.pathname.replace(/^\/+|\/+$/g, "").split("?")[0];
+          if (path && path.includes("-")) {
+            title = `Meet (${path})`;
+          }
         }
       } else if (host.includes("zoom.us")) {
-        const titleEl = document.querySelector('.meeting-info-title, [class*="meeting-title"], .meeting-header');
+        const titleEl = document.querySelector(
+          '.meeting-info-title, [class*="meeting-title"], .meeting-header, [class*="header-title"], .meeting-info-topic'
+        );
         title = titleEl ? titleEl.innerText.trim() : "";
         if (!title && document.title) {
-          title = document.title.replace(/- Zoom.*$/, "").trim();
+          const cleanDoc = document.title.replace(/- Zoom.*$/i, "").replace(/Zoom Workplace.*$/i, "").replace(/Zoom Meeting.*$/i, "").trim();
+          if (cleanDoc && cleanDoc.toLowerCase() !== "zoom") {
+            title = cleanDoc;
+          }
+        }
+        if (!title) {
+          const match = window.location.pathname.match(/\/j\/(\d+)/);
+          if (match) title = `Zoom Meeting (${match[1]})`;
         }
       }
     } catch (e) {}
@@ -434,7 +452,12 @@
     const key = getMeetingKey();
     if (key.includes("home") || key.includes("landing")) return Promise.resolve(null);
 
-    const title = currentMeetingTitle || detectMeetingTitle();
+    // Refresh judul terkini sebelum menyimpan
+    const detected = detectMeetingTitle();
+    if (detected && !detected.startsWith("Meeting 20")) {
+      currentMeetingTitle = detected;
+    }
+    const title = currentMeetingTitle || detected || "Meeting " + new Date().toISOString().slice(0, 10);
     const now = Date.now();
     const dt = getFormattedDateTime(now);
 
