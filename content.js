@@ -18,6 +18,29 @@
   let elementIdCounter = 0;
   const elementIdMap = new WeakMap();
 
+  function isExtensionValid() {
+    try {
+      return !!(chrome && chrome.runtime && chrome.runtime.id);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function stopAllIntervals() {
+    if (captionCheckInterval) {
+      clearInterval(captionCheckInterval);
+      captionCheckInterval = null;
+    }
+    if (syncTimer) {
+      clearInterval(syncTimer);
+      syncTimer = null;
+    }
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
+  }
+
   function getPlatform() {
     const host = window.location.host;
     if (host.includes("teams.microsoft.com") || host.includes("teams.live.com") || host.includes("teams.cloud.microsoft")) {
@@ -384,7 +407,16 @@
     const dt = getFormattedDateTime(now);
 
     return new Promise((resolve) => {
+      if (!isExtensionValid()) {
+        stopAllIntervals();
+        return resolve(null);
+      }
+
       chrome.storage.local.get([STORAGE_SESSIONS_KEY], (res) => {
+        if (!isExtensionValid()) {
+          stopAllIntervals();
+          return resolve(null);
+        }
         const sessions = res[STORAGE_SESSIONS_KEY] || {};
         const existing = sessions[key] || {};
 
@@ -415,11 +447,19 @@
   }
 
   function flushStorage() {
+    if (!isExtensionValid()) {
+      stopAllIntervals();
+      return;
+    }
     if (!isDirty) return;
     isDirty = false;
 
-    chrome.storage.local.set({ [STORAGE_LOGS_KEY]: transcripts });
-    saveCurrentSessionToHistory(false);
+    try {
+      chrome.storage.local.set({ [STORAGE_LOGS_KEY]: transcripts });
+      saveCurrentSessionToHistory(false);
+    } catch (e) {
+      stopAllIntervals();
+    }
   }
 
   // ==========================================
@@ -2080,7 +2120,12 @@
 
   // Watch URL changes for SPA navigation into a meeting room
   let lastNavUrl = window.location.href;
-  setInterval(() => {
+  const navCheckInterval = setInterval(() => {
+    if (!isExtensionValid()) {
+      clearInterval(navCheckInterval);
+      stopAllIntervals();
+      return;
+    }
     if (window.location.href !== lastNavUrl) {
       lastNavUrl = window.location.href;
       if (isActualMeetingRoom() && !widgetContainer) {
