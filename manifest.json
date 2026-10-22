@@ -37,6 +37,12 @@
   },
   "content_scripts": [
     {
+      "matches": ["*://*.zoom.us/*"],
+      "js": ["zoom_hook.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
       "matches": [
         "*://teams.live.com/*",
         "*://teams.microsoft.com/*",
@@ -46,6 +52,12 @@
       ],
       "js": ["content.js"],
       "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["zoom_hook.js"],
+      "matches": ["*://*.zoom.us/*"]
     }
   ]
 }

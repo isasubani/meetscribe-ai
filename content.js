@@ -373,12 +373,16 @@
   }
 
   function extractZoom() {
+    // 1. Zoom React side-panel and caption DOM selectors (fallback)
     const textEls = document.querySelectorAll(
-      "[class*='closed-caption-content'], .closed-caption-item, [class*='transcript-item']"
+      "[class*='closed-caption-content'], .closed-caption-item, [class*='transcript-item'], [class*='single-transcription'], .transcription-message-item"
     );
     textEls.forEach((item) => {
-      const speakerEl = item.querySelector("[class*='speaker'], [class*='author'], .name, [class*='name']");
-      const contentEl = item.querySelector("[class*='content'], [class*='text'], .message") || item;
+      const speakerEl = item.querySelector(
+        "[class*='speaker'], [class*='author'], .name, [class*='name'], [class*='sender-name']"
+      );
+      const contentEl =
+        item.querySelector("[class*='content'], [class*='text'], .message, [class*='transcription-text']") || item;
 
       let speaker = speakerEl ? speakerEl.innerText.trim() : "Participant";
       let text = contentEl ? contentEl.innerText.trim() : "";
@@ -392,6 +396,31 @@
         upsertUtterance(uid, speaker, text);
       }
     });
+  }
+
+  // Listen to Zoom in-page hook events (from zoom_hook.js via document.documentElement CustomEvent)
+  if (window.location.host.includes("zoom.us")) {
+    document.documentElement.addEventListener("meetscribe-zoom-caption", (evt) => {
+      const detail = evt.detail;
+      if (!detail || !detail.text) return;
+      upsertUtterance("zoom_" + (detail.msgId || Date.now()), detail.speaker || "Participant", detail.text);
+    });
+
+    document.documentElement.addEventListener("meetscribe-zoom-title", (evt) => {
+      const detail = evt.detail;
+      if (detail && detail.title && !currentMeetingTitle) {
+        currentMeetingTitle = detail.title;
+        updateFloatingWidget();
+      }
+    });
+
+    // Inject zoom_hook.js fallback in case MAIN world content script is delayed
+    try {
+      const s = document.createElement("script");
+      s.src = chrome.runtime.getURL("zoom_hook.js");
+      s.onload = () => s.remove();
+      (document.head || document.documentElement).appendChild(s);
+    } catch (e) {}
   }
 
   // Save or replace/update current meeting record in History
