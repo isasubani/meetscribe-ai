@@ -251,50 +251,54 @@
 
     const existingIndex = transcripts.findIndex((t) => t.id === uid);
 
-    if (existingIndex > -1) {
-      const existing = transcripts[existingIndex];
-      if (cleanText !== existing.text || (cleanSpeaker && cleanSpeaker !== existing.speaker)) {
-        existing.text = cleanText;
-        if (!existing.time) existing.time = getTimestamp();
-        if (cleanSpeaker && cleanSpeaker !== "Participant") {
-          existing.speaker = cleanSpeaker;
+    try {
+      if (existingIndex > -1) {
+        const existing = transcripts[existingIndex];
+        if (cleanText !== existing.text || (cleanSpeaker && cleanSpeaker !== existing.speaker)) {
+          existing.text = cleanText;
+          if (!existing.time) existing.time = getTimestamp();
+          if (cleanSpeaker && cleanSpeaker !== "Participant") {
+            existing.speaker = cleanSpeaker;
+          }
+          isDirty = true;
+          updateFloatingWidget();
         }
-        isDirty = true;
-        updateFloatingWidget();
-      }
-    } else {
-      const prevItem = transcripts[transcripts.length - 1];
-      const now = Date.now();
-
-      if (prevItem && prevItem.text === cleanText) {
-        return;
-      }
-
-      const autoTag = detectTag(cleanText);
-
-      if (
-        prevItem &&
-        prevItem.speaker === cleanSpeaker &&
-        now - prevItem.timestamp < 10000 &&
-        !prevItem.text.endsWith(".")
-      ) {
-        prevItem.text = mergeStreamText(prevItem.text, cleanText);
-        if (!prevItem.tag && autoTag) prevItem.tag = autoTag;
-        isDirty = true;
-        updateFloatingWidget();
       } else {
-        transcripts.push({
-          id: uid,
-          speaker: cleanSpeaker,
-          text: cleanText,
-          time: getTimestamp(),
-          timestamp: now,
-          tag: autoTag,
-          isPinned: !!autoTag
-        });
-        isDirty = true;
-        updateFloatingWidget();
+        const prevItem = transcripts[transcripts.length - 1];
+        const now = Date.now();
+
+        if (prevItem && prevItem.text === cleanText) {
+          return;
+        }
+
+        const autoTag = detectTag(cleanText);
+
+        if (
+          prevItem &&
+          prevItem.speaker === cleanSpeaker &&
+          now - prevItem.timestamp < 10000 &&
+          !prevItem.text.endsWith(".")
+        ) {
+          prevItem.text = mergeStreamText(prevItem.text, cleanText);
+          if (!prevItem.tag && autoTag) prevItem.tag = autoTag;
+          isDirty = true;
+          updateFloatingWidget();
+        } else {
+          transcripts.push({
+            id: uid,
+            speaker: cleanSpeaker,
+            text: cleanText,
+            time: getTimestamp(),
+            timestamp: now,
+            tag: autoTag,
+            isPinned: !!autoTag
+          });
+          isDirty = true;
+          updateFloatingWidget();
+        }
       }
+    } catch (err) {
+      console.warn("[MeetScribe] upsertUtterance error:", err);
     }
   }
 
