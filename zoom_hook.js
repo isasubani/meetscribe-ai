@@ -102,11 +102,14 @@
           // New or updated message
           if (!prevItem || prevItem.text !== item.text) {
             let speakerName = item.user?.displayName;
-            if (!speakerName && item.user?.zoomID) {
-              const att = attendees.find((a) => a.userId === item.user.zoomID || a.userGUID === item.user.zoomID);
+            const speakerId = item.user?.zoomID || item.user?.userId || "";
+            if (!speakerName && speakerId) {
+              const att = attendees.find((a) => a.userId === speakerId || a.userGUID === speakerId);
               if (att?.displayName) speakerName = att.displayName;
             }
-            dispatchCaption(msgId, speakerName || "Participant", item.text);
+            // Gunakan format msgId yang konsisten agar saat kalimat bertambah, mereplace baris yang sama persis
+            const stableKey = msgId ? `${msgId}_${speakerId || speakerName}` : (speakerId || speakerName || "p");
+            dispatchCaption(stableKey, speakerName || "Participant", item.text);
           }
         }
       }

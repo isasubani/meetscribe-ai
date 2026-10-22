@@ -403,7 +403,10 @@
     document.documentElement.addEventListener("meetscribe-zoom-caption", (evt) => {
       const detail = evt.detail;
       if (!detail || !detail.text) return;
-      upsertUtterance("zoom_" + (detail.msgId || Date.now()), detail.speaker || "Participant", detail.text);
+      const speaker = detail.speaker || "Participant";
+      // Gunakan stable message ID dari Zoom Redux (l.msgId / userId) agar mereplace baris yang sama persis
+      const stableUid = detail.msgId ? `zoom_${detail.msgId}` : `zoom_${speaker}`;
+      upsertUtterance(stableUid, speaker, detail.text);
     });
 
     document.documentElement.addEventListener("meetscribe-zoom-title", (evt) => {
